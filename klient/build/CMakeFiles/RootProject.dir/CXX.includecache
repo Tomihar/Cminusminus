@@ -1,0 +1,20 @@
+#IncludeRegexLine: ^[ 	]*#[ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/tomihar/cminusminus/klient/sources/main.cpp
+stdio.h
+-
+sys/socket.h
+-
+stdlib.h
+-
+netinet/in.h
+-
+string.h
+-
+
