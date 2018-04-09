@@ -1,7 +1,0 @@
-/home/tomihar/cminusminus/server/build/CMakeFiles/install.dir
-/home/tomihar/cminusminus/server/build/CMakeFiles/list_install_components.dir
-/home/tomihar/cminusminus/server/build/CMakeFiles/rebuild_cache.dir
-/home/tomihar/cminusminus/server/build/CMakeFiles/RootProject.dir
-/home/tomihar/cminusminus/server/build/CMakeFiles/install/local.dir
-/home/tomihar/cminusminus/server/build/CMakeFiles/install/strip.dir
-/home/tomihar/cminusminus/server/build/CMakeFiles/edit_cache.dir
