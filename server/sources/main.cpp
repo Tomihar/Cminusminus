@@ -63,7 +63,7 @@ int main(int argc, char const *argv[])
 
     int Thread_counter = 0;
 
-    while (Thread_counter < noThread)
+    while (true)
     {
         std::cout << "Listening" << std::endl;
         if ((new_client_socket = accept(server_fd, (struct sockaddr *)&address, 
@@ -84,28 +84,25 @@ int main(int argc, char const *argv[])
 
 
         t1.detach();            
-
-         Thread_counter++;
     }
-
- /*   for(int i = 0; i < noThread; i++)
-    {
-        myThreads[i].join();
-    }*/
-   // send(new_client_socket , hello , strlen(hello) , 0 );
-   // printf("Hello message sent\n");
-    return 0;
 }
 
 void task1(int clientSocket)
 {   
     send(clientSocket , hello , strlen(hello) , 0 );
-    char buffer[1024] = {0};
+	while(true)
+	{
+		char buffer[1024] = {0};
    // int valread = read( clientSocket , buffer, 1024);
-    int valread = recv(clientSocket,buffer,sizeof(buffer),0);
+		int valread = recv(clientSocket,buffer,sizeof(buffer),0);
     //printf("%s\n",buffer );
-    std::cout<<"Client_ID="<<clientSocket<<" send: "<<buffer<< std::endl;
-    send(clientSocket , buffer , strlen(buffer) , 0 );
+		std::cout<<"Client_ID="<<clientSocket<<" send: "<<buffer<< std::endl;
+		if(buffer == "exit")
+		{
+			break;
+		}
+		send(clientSocket , buffer , strlen(buffer) , 0 );
+	}
 }
 
 

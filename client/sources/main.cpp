@@ -41,19 +41,31 @@ int main(int argc, char const *argv[])
         printf("\nConnection Failed \n");
         return -1;
     }
-
-    valread = read( sock , buffer, 1024);
-    printf("Serwer: %s\n",buffer );
+	else
+	{
+		valread = read( sock , buffer, 1024);
+		printf("Serwer: %s\n",buffer );
+	}
+	
+	while(true)
+	{
     
     std::string tekst;
     std::getline( std::cin, tekst );
+	if(tekst == "exit")
+	{
+		send(sock , tekst.c_str() , tekst.length() , 0 );
+		printf("Exiting client\n\n");
+		break;
+	}
     
     send(sock , tekst.c_str() , tekst.length() , 0 );
     printf("Message sent\n\n");
    
-    memset(buffer, 0, sizeof(buffer));
-    valread = read( sock , buffer, 1024);
-    printf("Serwer: %s\n",buffer );
+    //memset(buffer, 0, sizeof(buffer));
+    //valread = read( sock , buffer, 1024);
+    //printf("Serwer: %s\n",buffer );
+	}
     
 
     return 0;
