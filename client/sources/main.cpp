@@ -3,19 +3,29 @@
 #include <sys/socket.h>
 #include <stdlib.h>
 #include <netinet/in.h>
-#include <string.h>
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <string>
+#include <string.h>
+
 #include <iostream>
 #define PORT 8080
+
+struct header
+{
+	int msgId;
+	int message_size;
+	char login[16];
+	char password[16];
+};
   
 int main(int argc, char const *argv[])
 {
+	header msg;
+	std::string tekst;
     struct sockaddr_in address;
     int sock = 0, valread;
     struct sockaddr_in serv_addr;
-    //char *hello = "Hello from client11";
 
     char buffer[1024] = {0};
     if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0)
@@ -46,16 +56,37 @@ int main(int argc, char const *argv[])
 		valread = read( sock , buffer, 1024);
 		printf("Serwer: %s\n",buffer );
 	}
+	char option;
+	while(true)
+	{
+		printf("Register or login.\n For register write 'r', for login write 'l'\n");	    
+		std::cin>>option;
+		if(option == 'r')
+		{
+			msg.msgId = 1;
+		printf("Write your login:\n");	    
+		std::cin>>msg.login;
+		printf("\nWrite your password:\n");	    
+		std::cin>>msg.password;
+		std::cout<<msg.login;
+		msg.message_size = 0;
+		send(sock, &msg, sizeof(header), 0 );
+		break;
+		}
+		if(option == 'r')
+		{
+			msg.msgId = 2;
+		}
+	}
 	
 	while(true)
 	{
-    
-    std::string tekst;
     std::getline( std::cin, tekst );
 	if(tekst == "exit")
 	{
 		send(sock , tekst.c_str() , tekst.length() , 0 );
 		printf("Exiting client\n\n");
+		tekst = "Exiting server";
 		break;
 	}
     
@@ -66,9 +97,6 @@ int main(int argc, char const *argv[])
     //valread = read( sock , buffer, 1024);
     //printf("Serwer: %s\n",buffer );
 	}
-    
-
-    return 0;
 }
 
 

@@ -2,6 +2,7 @@
 #include <sys/socket.h>
 #include <stdlib.h>
 #include <netinet/in.h>
+#include <string>
 #include <string.h>
 //#include <unistd.h> //read
 #include <thread>
@@ -14,10 +15,17 @@ void task1(int clientSocket);
 
 char *hello = "You are connected !!!";
 
-
+struct header
+{
+	int msgId;
+	int message_size;
+	char login[16];
+	char password[16];
+};
 
 int main(int argc, char const *argv[])
 {
+	header msg;
     int server_fd, new_client_socket, valread;
     struct sockaddr_in address;
     int opt = 1;
@@ -90,18 +98,24 @@ int main(int argc, char const *argv[])
 void task1(int clientSocket)
 {   
     send(clientSocket , hello , strlen(hello) , 0 );
+	char buffer[1024] = {0};
+	recv(clientSocket, buffer, 1024, 0);
+	header* msg = (header*)buffer;
+	if(msg -> msgId == 1)
+	{
+            std::cout << msg->login << std::endl;
+	}
 	while(true)
 	{
-		char buffer[1024] = {0};
+	char buffer[1024] = {0};
    // int valread = read( clientSocket , buffer, 1024);
 		int valread = recv(clientSocket,buffer,sizeof(buffer),0);
     //printf("%s\n",buffer );
 		std::cout<<"Client_ID="<<clientSocket<<" send: "<<buffer<< std::endl;
-		if(buffer == "exit")
+		if(strcmp(buffer, "exit") == 0)
 		{
 			break;
 		}
-		send(clientSocket , buffer , strlen(buffer) , 0 );
 	}
 }
 
