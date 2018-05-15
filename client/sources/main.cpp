@@ -81,6 +81,7 @@ int main(int argc, char const *argv[])
 			else
 			{
 				std::cout<<"Login already in use"<<std::endl;
+				continue;
 			}
 		}
 		if(option == 'l')
@@ -95,7 +96,7 @@ int main(int argc, char const *argv[])
 			memset(buffer, 0, sizeof(buffer));
 			recv(sock, buffer, 1024, 0);
 			int lol = strcmp(buffer, "logged");
-			std::cout<<lol<<std::endl;
+			std::cout<<lol<<buffer<<std::endl;
 			if(lol == 0)
 			{
 				std::cout<<"You have been logged"<<std::endl;

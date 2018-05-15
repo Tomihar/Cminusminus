@@ -112,15 +112,23 @@ void task1(int clientSocket)
 	header* msg = (header*)buffer;
 	if(msg -> msgId == 1)
 	{
+		int is_used = 0;
 		for(int i = 0; i < users.size(); i++)
 		{
-			if(strcmp(users[i].login, msg->login) == 0)
+			is_used = strcmp(users[i].login, msg->login);
+			if(is_used == 0)
 			{
 				char *msgr = "use";
 				send(clientSocket , msgr , strlen(msgr) , 0 );
-				continue;
+				break;
 			}
 		}
+		if(is_used == 0)
+		{
+			continue;
+		}
+		else
+		{
 		users.push_back(user());
 		strcpy(users[counter].login, msg->login);
 		strcpy(users[counter].password, msg->password);
@@ -129,12 +137,16 @@ void task1(int clientSocket)
 		char *msgr = "reg";
 		send(clientSocket , msgr , strlen(msgr) , 0 );
 		break;
+		}
 	}
 	if(msg -> msgId == 2)
 	{
+		int is_login_correct = 0;
+		int is_password_correct = 0;
 		for(int i = 0; i < users.size(); i++)
-		{
-			if(strcmp(users[i].login, msg->login) == 0 && strcmp(users[i].password, msg->password) == 0)
+		{   is_login_correct = strcmp(users[i].login, msg->login);
+			is_password_correct = strcmp(users[i].password, msg->password);
+			if(is_login_correct == 0 && is_password_correct == 0)
 			{
 				char *logged = "logged";
 				send(clientSocket , logged , strlen(logged) , 0 );
@@ -142,8 +154,16 @@ void task1(int clientSocket)
 				break;
 			}
 		}
+		if(is_login_correct == 0 && is_password_correct == 0)
+		{
+			break;
+		}
+		else
+		{
 		char *msgr = "error";
 		send(clientSocket , msgr , strlen(msgr) , 0 );
+		continue;
+		}
 	}
 	}
 	while(true)
