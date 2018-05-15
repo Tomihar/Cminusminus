@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <sys/socket.h>
 #include <stdlib.h>
+#include <vector>
 #include <netinet/in.h>
 #include <string>
 #include <string.h>
@@ -23,16 +24,18 @@ struct header
 	char password[16];
 };
 
+struct user
+{
+	char login[16];
+	char password[16];
+};
+
 int main(int argc, char const *argv[])
 {
-	header msg;
     int server_fd, new_client_socket, valread;
     struct sockaddr_in address;
     int opt = 1;
     int addrlen = sizeof(address);
-  
-    const int noThread = 2;
-    std::thread myThreads[noThread];
 
 
 
@@ -67,9 +70,6 @@ int main(int argc, char const *argv[])
         perror("listen");
         exit(EXIT_FAILURE);
     }
-    
-
-    int Thread_counter = 0;
 
     while (true)
     {
@@ -97,20 +97,59 @@ int main(int argc, char const *argv[])
 
 void task1(int clientSocket)
 {   
+	int counter = 0;
+	std::vector<user> users;
+		users.push_back(user());
+		strcpy(users[counter].login, "tomihar");
+		strcpy(users[counter].password, "q1w2e3r4t");
+		counter++;
     send(clientSocket , hello , strlen(hello) , 0 );
 	char buffer[1024] = {0};
+	while(true)
+	{
+	memset(buffer, 0, sizeof(buffer));
 	recv(clientSocket, buffer, 1024, 0);
 	header* msg = (header*)buffer;
 	if(msg -> msgId == 1)
 	{
-            std::cout << msg->login << std::endl;
+		for(int i = 0; i < users.size(); i++)
+		{
+			if(strcmp(users[i].login, msg->login) == 0)
+			{
+				char *msgr = "use";
+				send(clientSocket , msgr , strlen(msgr) , 0 );
+				continue;
+			}
+		}
+		users.push_back(user());
+		strcpy(users[counter].login, msg->login);
+		strcpy(users[counter].password, msg->password);
+		std::cout << "Registered user: " << msg->login << std::endl;
+		counter++;
+		char *msgr = "reg";
+		send(clientSocket , msgr , strlen(msgr) , 0 );
+		break;
+	}
+	if(msg -> msgId == 2)
+	{
+		for(int i = 0; i < users.size(); i++)
+		{
+			if(strcmp(users[i].login, msg->login) == 0 && strcmp(users[i].password, msg->password) == 0)
+			{
+				char *logged = "logged";
+				send(clientSocket , logged , strlen(logged) , 0 );
+				std::cout << "Logged user: " << msg->login << std::endl;
+				break;
+			}
+		}
+		char *msgr = "error";
+		send(clientSocket , msgr , strlen(msgr) , 0 );
+	}
 	}
 	while(true)
 	{
-	char buffer[1024] = {0};
-   // int valread = read( clientSocket , buffer, 1024);
-		int valread = recv(clientSocket,buffer,sizeof(buffer),0);
-    //printf("%s\n",buffer );
+		char buffer[1024] = {0};
+		recv(clientSocket,buffer,sizeof(buffer),0);
 		std::cout<<"Client_ID="<<clientSocket<<" send: "<<buffer<< std::endl;
 		if(strcmp(buffer, "exit") == 0)
 		{

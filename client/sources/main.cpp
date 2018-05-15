@@ -64,18 +64,47 @@ int main(int argc, char const *argv[])
 		if(option == 'r')
 		{
 			msg.msgId = 1;
-		printf("Write your login:\n");	    
-		std::cin>>msg.login;
-		printf("\nWrite your password:\n");	    
-		std::cin>>msg.password;
-		std::cout<<msg.login;
-		msg.message_size = 0;
-		send(sock, &msg, sizeof(header), 0 );
-		break;
+			printf("Write your login:\n");	    
+			std::cin>>msg.login;
+			printf("\nWrite your password:\n");	    
+			std::cin>>msg.password;
+			msg.message_size = 0;
+			send(sock, &msg, sizeof(header), 0 );
+			memset(buffer, 0, sizeof(buffer));
+			recv(sock, buffer, 1024, 0);
+			int lol = strcmp(buffer, "reg");
+			if(lol == 0)
+			{
+				std::cout<<"You have been registered and logged"<<std::endl;
+				break;
+			}
+			else
+			{
+				std::cout<<"Login already in use"<<std::endl;
+			}
 		}
-		if(option == 'r')
+		if(option == 'l')
 		{
 			msg.msgId = 2;
+			printf("Write your login:\n");	    
+			std::cin>>msg.login;
+			printf("\nWrite your password:\n");	    
+			std::cin>>msg.password;
+			msg.message_size = 0;
+			send(sock, &msg, sizeof(header), 0 );
+			memset(buffer, 0, sizeof(buffer));
+			recv(sock, buffer, 1024, 0);
+			int lol = strcmp(buffer, "logged");
+			std::cout<<lol<<std::endl;
+			if(lol == 0)
+			{
+				std::cout<<"You have been logged"<<std::endl;
+				break;
+			}
+			else
+			{
+			std::cout<<"Wrong login or password"<<std::endl;
+			}
 		}
 	}
 	
