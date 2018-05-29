@@ -12,6 +12,7 @@
 
 #define PORT 8080
 
+std::vector<int> sockets;
 void task1(int clientSocket);
 
 char *hello = "You are connected !!!";
@@ -82,11 +83,16 @@ int main(int argc, char const *argv[])
         }
         else 
         {
+			sockets.push_back(new_client_socket);
             std::cout << "Connection successful ClientID="<<new_client_socket << std::endl;
             
         }
 
         std::thread t1 = std::thread(task1, new_client_socket);
+		for(int i = 0; i < sockets.size(); i++)
+		{
+			std::cout<<sockets[i]<<std::endl;
+		}
         //std::thread t1(task1, new_client_socket);
         //  t1.join();
 
@@ -104,76 +110,78 @@ void task1(int clientSocket)
 		strcpy(users[counter].password, "q1w2e3r4t");
 		counter++;
     send(clientSocket , hello , strlen(hello) , 0 );
-	char buffer[1024] = {0};
+	char buffer[40] = {0};
 	while(true)
 	{
-	memset(buffer, 0, sizeof(buffer));
-	recv(clientSocket, buffer, 1024, 0);
-	header* msg = (header*)buffer;
-	if(msg -> msgId == 1)
-	{
-		int is_used = 0;
-		for(int i = 0; i < users.size(); i++)
+		memset(buffer, 0, sizeof(buffer));
+		recv(clientSocket, buffer, 40, 0);
+		header* msg = (header*)buffer;
+
+		if(msg -> msgId == 1)
 		{
-			is_used = strcmp(users[i].login, msg->login);
+			int is_used = 0;
+			for(int i = 0; i < users.size(); i++)
+			{
+				is_used = strcmp(users[i].login, msg->login);
+				if(is_used == 0)
+				{
+					char *msgr = "use";
+					send(clientSocket , msgr , strlen(msgr) , 0 );
+					continue;
+				}
+			}
 			if(is_used == 0)
 			{
-				char *msgr = "use";
-				send(clientSocket , msgr , strlen(msgr) , 0 );
-				break;
+				continue;
+			}
+			else
+			{
+			users.push_back(user());
+			strcpy(users[counter].login, msg->login);
+			strcpy(users[counter].password, msg->password);
+			std::cout << "Registered user: " << msg->login << std::endl;
+			counter++;
+			char *msgr = "reg";
+			send(clientSocket , msgr , strlen(msgr) , 0 );
+			continue;
 			}
 		}
-		if(is_used == 0)
+		if(msg -> msgId == 2)
 		{
-			continue;
-		}
-		else
-		{
-		users.push_back(user());
-		strcpy(users[counter].login, msg->login);
-		strcpy(users[counter].password, msg->password);
-		std::cout << "Registered user: " << msg->login << std::endl;
-		counter++;
-		char *msgr = "reg";
-		send(clientSocket , msgr , strlen(msgr) , 0 );
-		break;
-		}
-	}
-	if(msg -> msgId == 2)
-	{
-		int is_login_correct = 0;
-		int is_password_correct = 0;
-		for(int i = 0; i < users.size(); i++)
-		{   is_login_correct = strcmp(users[i].login, msg->login);
-			is_password_correct = strcmp(users[i].password, msg->password);
+			int is_login_correct = 0;
+			int is_password_correct = 0;
+			for(int i = 0; i < users.size(); i++)
+			{   is_login_correct = strcmp(users[i].login, msg->login);
+				is_password_correct = strcmp(users[i].password, msg->password);
+				if(is_login_correct == 0 && is_password_correct == 0)
+				{
+					char *logged = "logged";
+					send(clientSocket , logged , strlen(logged) , 0 );
+					std::cout << "Logged user: " << msg->login << std::endl;
+					break;
+				}
+			}
 			if(is_login_correct == 0 && is_password_correct == 0)
 			{
-				char *logged = "logged";
-				send(clientSocket , logged , strlen(logged) , 0 );
-				std::cout << "Logged user: " << msg->login << std::endl;
-				break;
+				continue;
+			}
+			else
+			{
+			char *msgr = "error";
+			send(clientSocket , msgr , strlen(msgr) , 0 );
+			continue;
 			}
 		}
-		if(is_login_correct == 0 && is_password_correct == 0)
+		if(msg -> msgId == 3)
 		{
-			break;
-		}
-		else
-		{
-		char *msgr = "error";
-		send(clientSocket , msgr , strlen(msgr) , 0 );
-		continue;
-		}
-	}
-	}
-	while(true)
-	{
-		char buffer[1024] = {0};
-		recv(clientSocket,buffer,sizeof(buffer),0);
-		std::cout<<"Client_ID="<<clientSocket<<" send: "<<buffer<< std::endl;
-		if(strcmp(buffer, "exit") == 0)
-		{
-			break;
+			char *message = new char[msg->message_size];
+			recv(clientSocket,message,msg->message_size,0);
+			std::cout<<msg->login<<" send: "<<message<< std::endl;
+			if(strcmp(message, "exit") == 0)
+			{
+				break;
+			}
+			delete []message;
 		}
 	}
 }

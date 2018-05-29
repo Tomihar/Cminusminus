@@ -7,7 +7,6 @@
 #include <unistd.h>
 #include <string>
 #include <string.h>
-
 #include <iostream>
 #define PORT 8080
 
@@ -59,8 +58,11 @@ int main(int argc, char const *argv[])
 	char option;
 	while(true)
 	{
-		printf("Register or login.\n For register write 'r', for login write 'l'\n");	    
-		std::cin>>option;
+		if(option != 'm')
+		{
+			printf("Register or login.\n For register write 'r', for login write 'l'\n");	    
+			std::cin>>option;
+		}
 		if(option == 'r')
 		{
 			msg.msgId = 1;
@@ -76,7 +78,8 @@ int main(int argc, char const *argv[])
 			if(lol == 0)
 			{
 				std::cout<<"You have been registered and logged"<<std::endl;
-				break;
+				option = 'm';
+				continue;
 			}
 			else
 			{
@@ -100,32 +103,39 @@ int main(int argc, char const *argv[])
 			if(lol == 0)
 			{
 				std::cout<<"You have been logged"<<std::endl;
-				break;
+				option = 'm';
+				continue;
 			}
 			else
 			{
 			std::cout<<"Wrong login or password"<<std::endl;
 			}
 		}
-	}
-	
-	while(true)
-	{
-    std::getline( std::cin, tekst );
-	if(tekst == "exit")
-	{
-		send(sock , tekst.c_str() , tekst.length() , 0 );
-		printf("Exiting client\n\n");
-		tekst = "Exiting server";
-		break;
-	}
-    
-    send(sock , tekst.c_str() , tekst.length() , 0 );
-    printf("Message sent\n\n");
-   
-    //memset(buffer, 0, sizeof(buffer));
-    //valread = read( sock , buffer, 1024);
-    //printf("Serwer: %s\n",buffer );
+		if(option == 'm')
+		{
+			tekst = "";
+			msg.msgId = 3;
+			std::getline( std::cin, tekst );
+			msg.message_size = tekst.length();
+			if(tekst == "exit")
+			{
+				send(sock , tekst.c_str() , tekst.length() , 0 );
+				printf("Exiting client\n\n");
+				tekst = "Exiting server";
+				continue;
+			}
+			if(tekst.length() != 0)
+			{
+				std::cout<<sizeof(msg)<<tekst.length()<<std::endl;
+				send(sock, &msg, sizeof(header), 0 );
+				send(sock , tekst.c_str() , tekst.length() , 0 );
+				printf("Message sent\n\n");
+			}
+			else
+			{
+				continue;
+			}
+		}
 	}
 }
 
