@@ -8,8 +8,9 @@
 #include <string>
 #include <string.h>
 #include <iostream>
+#include <thread>
 #define PORT 8080
-
+//header wiadomosci
 struct header
 {
 	int msgId;
@@ -17,9 +18,14 @@ struct header
 	char login[16];
 	char password[16];
 };
+//wiadomosc od serwera
+char srv_msg[3] = {0};
+
+void task1(int clientSocket);
   
 int main(int argc, char const *argv[])
 {
+	//deklaracja headera wiadomosci
 	header msg;
 	std::string tekst;
     struct sockaddr_in address;
@@ -50,44 +56,51 @@ int main(int argc, char const *argv[])
         printf("\nConnection Failed \n");
         return -1;
     }
-	else
-	{
-		valread = read( sock , buffer, 1024);
-		printf("Serwer: %s\n",buffer );
-	}
-	char option;
+	//utworzenie watku odbierajacego wiadomosci od serwera
+    std::thread t_recieve = std::thread(task1, sock);
+	t_recieve.detach();
+// deklaracja zmiennej oznaczajacej dana opcje klienta
+	int option = 0;
 	while(true)
 	{
-		if(option != 'm')
+		//opcja zerowa, podanie wlasciwej opcji
+		if(option == 0)
 		{
-			printf("Register or login.\n For register write 'r', for login write 'l'\n");	    
+			printf("Register or login.\n For register write 1, for login write 3\n");	    
 			std::cin>>option;
 		}
-		if(option == 'r')
+		//opcja rejestracji
+		if(option == 1)
 		{
+			//id = 1 - rejestracja
 			msg.msgId = 1;
 			printf("Write your login:\n");	    
 			std::cin>>msg.login;
 			printf("\nWrite your password:\n");	    
 			std::cin>>msg.password;
 			msg.message_size = 0;
+			//wysylamy tylko header z danymi
 			send(sock, &msg, sizeof(header), 0 );
-			memset(buffer, 0, sizeof(buffer));
-			recv(sock, buffer, 1024, 0);
-			int lol = strcmp(buffer, "reg");
-			if(lol == 0)
-			{
-				std::cout<<"You have been registered and logged"<<std::endl;
-				option = 'm';
-				continue;
-			}
-			else
+			option = 2;
+		}
+		//sprawdzenie, czy rejestracja przebiegla pomyslnie
+		if(option == 2)
+		{
+			int lol = strcmp(srv_msg, "err");
+			if(lol == 0 && strlen(srv_msg) != 0)
 			{
 				std::cout<<"Login already in use"<<std::endl;
+				option = 0;
 				continue;
 			}
+			if(lol != 0 && strlen(srv_msg) != 0)
+			{
+				std::cout<<"You have been registered and logged"<<srv_msg<<std::endl;
+				option = 5;
+			}
 		}
-		if(option == 'l')
+		//opcja logowania
+		if(option == 3)
 		{
 			msg.msgId = 2;
 			printf("Write your login:\n");	    
@@ -96,45 +109,85 @@ int main(int argc, char const *argv[])
 			std::cin>>msg.password;
 			msg.message_size = 0;
 			send(sock, &msg, sizeof(header), 0 );
-			memset(buffer, 0, sizeof(buffer));
-			recv(sock, buffer, 1024, 0);
-			int lol = strcmp(buffer, "logged");
-			std::cout<<lol<<buffer<<std::endl;
-			if(lol == 0)
+			option = 4;
+		}
+		//sprawdzenie, czy logowanie przebieglo pomyslnie
+		if(option == 4)
+		{
+			int lol = strcmp(srv_msg, "err");
+			if(lol == 0 && strlen(srv_msg) != 0)
+			{
+				std::cout<<"Wrong login or password"<<std::endl;
+				option = 0;
+			}
+			if(lol != 0 && strlen(srv_msg) != 0)
 			{
 				std::cout<<"You have been logged"<<std::endl;
-				option = 'm';
-				continue;
-			}
-			else
-			{
-			std::cout<<"Wrong login or password"<<std::endl;
+				option = 5;
 			}
 		}
-		if(option == 'm')
+		//wysylanie wiadomosci
+		if(option == 5)
 		{
 			tekst = "";
+			//ustawienie id wiadomosci na 3 = wiadomosc
 			msg.msgId = 3;
+			//wczytanie tresci wiadomosci do zmiennej
 			std::getline( std::cin, tekst );
+			//ustawienie wielkosci wiadomosci na dlugosc tekstu
 			msg.message_size = tekst.length();
-			if(tekst == "exit")
+			//jezeli wpisano /exit, wyjdz z klienta
+			if(tekst == "/exit")
 			{
-				send(sock , tekst.c_str() , tekst.length() , 0 );
-				printf("Exiting client\n\n");
-				tekst = "Exiting server";
-				continue;
-			}
-			if(tekst.length() != 0)
-			{
-				std::cout<<sizeof(msg)<<tekst.length()<<std::endl;
 				send(sock, &msg, sizeof(header), 0 );
 				send(sock , tekst.c_str() , tekst.length() , 0 );
-				printf("Message sent\n\n");
+				std::cout<<"Exiting client"<<std::endl;
+				break;
+			}
+			//jezeli wiadomosci nie jest pusta, wyslij ja
+			if(tekst.length() != 0)
+			{
+				//wyslanie headera
+				send(sock, &msg, sizeof(header), 0 );
+				//wyslanie wiadomosci (serwer odbierze to jako jedna wiadomosc)
+				send(sock , tekst.c_str() , tekst.length() , 0 );
 			}
 			else
 			{
 				continue;
 			}
+		}
+	}
+}
+//watek odbierania wiadomosci
+void task1 (int sock)
+{
+	//ustawienie bufora do zaladowania headera
+	char buffer[40] = {0};
+	while(true)
+	{
+		//zerowanie headera
+		memset(buffer, 0, sizeof(buffer));
+		//odbieranie headera od serwera
+		recv(sock, buffer, 40, 0);
+		//rzutowanie headera na buffer
+		header* srvmsg = (header*)buffer;
+		//ustawienie wiadomosci od serwera w zaleznosci od ID wiadomosci, 1 = blad, 2 = dane poprawne
+		if(srvmsg->msgId == 1)
+		{
+			strcpy(srv_msg, "err");
+		}
+		if(srvmsg->msgId == 2)
+		{
+			strcpy(srv_msg,"chk");
+		}
+		//odbieranie wiadomosci od serwera
+		if(srvmsg->msgId == 3)
+		{
+			char *message = new char[srvmsg->message_size];
+			recv(sock,message,srvmsg->message_size,0);
+			std::cout<<srvmsg->login<<" send: "<<message<< std::endl;
+			delete []message;
 		}
 	}
 }
